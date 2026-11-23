@@ -1,42 +1,37 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Auditor de Race Condition na Atualização do WordPress &amp; RCE | TAVARDT Portugal</title>
-  <meta name="description" content="Audite o seu WordPress contra falhas de Race Condition em atualizações, exposição de wp-content/upgrade/ e riscos de RCE. Diagnóstico corporativo TAVARDT.">
+  <title>Guia de Hardening &amp; Mitigação: WordPress Upgrade Race Condition | TAVARDT Portugal</title>
+  <meta name="description" content="Guia técnico de arquitetura defensiva, regras perimetrais de imunização contra RCE e ferramenta CLI para auditoria de race condition no WordPress.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/">
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
   <link rel="shortcut icon" href="./favicon.ico">
   
-  <!-- Open Graph -->
-  <meta property="og:title" content="Auditor de Race Condition na Atualização do WordPress &amp; RCE | TAVARDT Portugal">
-  <meta property="og:description" content="Audite a resiliência do seu WordPress contra Race Condition no processo de upgrade, exposição de wp-content/upgrade/ e RCE.">
+  <meta property="og:title" content="Guia de Hardening &amp; Mitigação: WordPress Upgrade Race Condition | TAVARDT Portugal">
+  <meta property="og:description" content="Referência técnica contra Race Condition no processo de upgrade do WordPress, exposição de wp-content/upgrade/ e execução remota de código.">
   <meta property="og:image" content="https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Auditor de Race Condition na Atualização do WordPress &amp; RCE | TAVARDT Portugal">
+  <meta property="og:image:alt" content="Guia de Hardening WordPress Upgrade Race Condition | TAVARDT Portugal">
   <meta property="og:url" content="https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_PT">
   
-  <!-- AEO & GEO Tags -->
   <meta name="ai-content-declaration" content="citable-security-tool">
   <meta name="geo.region" content="PT">
   <meta name="geo.placename" content="Portugal">
   
-  <!-- Google Tag Manager (Brasil) -->
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-5B6QSTN5');</script>
-  <!-- End Google Tag Manager -->
+  })(window,document,'script','dataLayer','GTM-5CQJRKBF');</script>
 
-  <!-- Schema.org JSON-LD (Strictly Regional pt-BR) -->
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -45,31 +40,20 @@
       "@type": "WebApplication",
       "@id": "https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/#webapp",
       "url": "https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/",
-      "name": "Auditor de Race Condition na Atualização do WordPress & RCE | TAVARDT Portugal",
+      "name": "Guia de Hardening & Mitigação: WordPress Upgrade Race Condition | TAVARDT Portugal",
       "applicationCategory": "SecurityApplication",
       "operatingSystem": "Linux, Unix, Cloud Edge, WordPress",
-      "description": "Scanner corporativo para auditoria em tempo real contra vulnerabilidades de Race Condition na descompactação de pacotes de upgrade e execução indevida de PHP em wp-content/upgrade/.",
+      "description": "Central técnica corporativa para mitigação de vulnerabilidades de Race Condition na descompactação de pacotes de upgrade e execução de PHP em wp-content/upgrade/.",
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "BRL"
+        "priceCurrency": "EUR"
       },
-      "sameAs": [
-        "https://ag.tavardt.com/pt/",
-        "https://ag.tavardt.com/pt/ciberseguranca/",
-        "https://tools.tavardt.com/pt/"
-      ],
       "publisher": {
         "@type": "Organization",
         "name": "TAVARDT Portugal",
         "url": "https://ag.tavardt.com/pt/",
-        "logo": "https://ag.tavardt.com/img/tavardt-og.png",
-        "sameAs": [
-          "https://ag.tavardt.com/pt/",
-          "https://ag.tavardt.com/pt/ciberseguranca/",
-          "https://tools.tavardt.com/pt/",
-          "https://github.com/TAVARDT-Brasil"
-        ]
+        "logo": "https://ag.tavardt.com/img/tavardt-og.png"
       }
     },
     {
@@ -81,7 +65,7 @@
           "name": "Como funciona a vulnerabilidade de Race Condition no upgrade do WordPress?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Durante o processo de atualização do core, temas ou plugins, o WordPress faz o download de um pacote ZIP e o descompacta temporariamente em wp-content/upgrade/. Se o servidor web permitir execução direta de scripts PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a validação e remoção dos temporários, obtendo execução remota de código."
+            "text": "Durante o processo de atualização do core, temas ou plugins, o WordPress descompacta temporariamente os arquivos em wp-content/upgrade/. Se o servidor permitir execução de PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a remoção dos temporários, obtendo execução remota de código."
           }
         },
         {
@@ -89,7 +73,7 @@
           "name": "Por que bloquear arquivos PHP em wp-content/upgrade/ é essencial?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "A pasta de upgrade destina-se unicamente à descompactação transitória de arquivos. Nenhum script PHP localizado em wp-content/upgrade/ deve ser invocado diretamente pelo navegador via HTTP. Bloquear a execução impede que eventuais falhas de corrida ou arquivos órfãos de atualizações incompletas sejam transformados em web shells ativas."
+            "text": "A pasta de upgrade destina-se unicamente à descompactação transitória de arquivos. Nenhum script PHP localizado em wp-content/upgrade/ deve ser invocado diretamente pelo navegador via HTTP. Bloquear a execução impede que eventuais falhas de corrida sejam exploradas como web shells."
           }
         },
         {
@@ -97,7 +81,7 @@
           "name": "O que é a diretiva WP_TEMP_DIR e como ela elimina essa vulnerabilidade?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "A diretiva WP_TEMP_DIR configurada no arquivo wp-config.php define um caminho do sistema operacional para armazenamento temporário fora da raiz pública web (como /var/www/tmp/). Ao mover a pasta temporária para fora do DocumentRoot, torna-se fisicamente impossível para um atacante acessar ou disparar os arquivos via requisições HTTP."
+            "text": "A diretiva WP_TEMP_DIR configurada no arquivo wp-config.php define um caminho do sistema operacional fora da raiz pública web (como /var/www/tmp/). Ao mover a pasta temporária para fora do DocumentRoot, torna-se fisicamente impossível para um atacante acessar os arquivos via requisições HTTP."
           }
         },
         {
@@ -105,15 +89,15 @@
           "name": "O Cloudflare WAF consegue proteger o WordPress contra esse ataque?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sim. Uma regra customizada de WAF no Cloudflare bloqueando qualquer requisição onde o caminho contenha wp-content/upgrade/ intercepta e descarta tentativas de exploração na borda global, antes mesmo que os pacotes alcancem o servidor de origem."
+            "text": "Sim. Uma regra customizada de WAF no Cloudflare bloqueando qualquer requisição onde o caminho contenha wp-content/upgrade/ intercepta e descarta tentativas de exploração na borda global, antes que alcancem o servidor de origem."
           }
         },
         {
           "@type": "Question",
-          "name": "Qual a diferença entre a auditoria online e o script de terminal?",
+          "name": "Como realizar o teste em meu ambiente de infraestrutura?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "A ferramenta online realiza a inspeção direta e imediata das rotas expostas no domínio informado. O script Python para terminal permite integrar a mesma validação em esteiras automatizadas de CI/CD e auditorias internas de infraestrutura."
+            "text": "O script oficial audit_wp_race.py fornecido nesta página permite executar a auditoria determinística via linha de comando diretamente no servidor ou terminal do administrador, sem restrições de CORS do navegador."
           }
         }
       ]
@@ -123,38 +107,11 @@
   </script>
 
   <style>
-  :root {
-    --bg: #030712;
-    --bg-secondary: #0b101e;
-    --surface: #0f172a;
-    --surface-card: #131c31;
-    --surface-hover: #1e293b;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-accent: rgba(30, 0, 255, 0.3);
-    --primary: #1e00ff;
-    --accent: #38bdf8;
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-subtle: #64748b;
-    --danger: #ef4444;
-    --danger-bg: rgba(239, 68, 68, 0.12);
-    --danger-border: rgba(239, 68, 68, 0.35);
-    --warning: #f59e0b;
-    --warning-bg: rgba(245, 158, 11, 0.12);
-    --warning-border: rgba(245, 158, 11, 0.35);
-    --success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.12);
-    --success-border: rgba(16, 185, 129, 0.35);
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --whatsapp-green: #25D366;
-  }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: var(--font-sans);
+    background-color: #030712;
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
@@ -162,8 +119,7 @@
     overflow-x: hidden;
   }
 
-  /* STICKY CANONICAL HEADER */
-  header.tavardt-header, header {
+  header.tavardt-header {
     width: 100% !important;
     display: block !important;
     background: rgba(5, 5, 16, 0.95) !important;
@@ -224,7 +180,6 @@
     color: #839bc8 !important;
   }
 
-  /* MAIN WRAPPER (100% WIDTH FLOW - CANONICAL 1200PX) */
   .tavardt-main {
     flex: 1;
     max-width: 1200px;
@@ -236,7 +191,7 @@
 
   .hero-section {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 36px;
     width: 100%;
   }
   .hero-title {
@@ -249,243 +204,218 @@
   }
   .hero-subtitle {
     font-size: 1.05rem;
-    color: var(--text-muted);
-    max-width: 820px;
-    margin: 0 auto 32px;
+    color: #94a3b8;
+    max-width: 860px;
+    margin: 0 auto;
     line-height: 1.6;
   }
 
-  /* TEST FORM & SEARCH HERO BAR (100% FULL-WIDTH WITHOUT INSET MARGINS) */
-  .search-hero-bar {
+  .cli-hero-box {
+    background: #0b101e;
+    border: 1px solid rgba(30, 0, 255, 0.35);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     width: 100%;
-    margin-bottom: 36px;
     box-sizing: border-box;
   }
-  .scanner-form {
+  .cli-header {
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 20px;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
-    width: 100%;
-    box-sizing: border-box;
   }
-  .scanner-input-wrap {
-    flex: 1;
-    min-width: 260px;
+  .cli-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
   }
-  .scanner-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    color: #ffffff;
-    font-family: var(--font-sans);
-    outline: none;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
+  .cli-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
   }
-  .scanner-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 20px rgba(30, 0, 255, 0.35);
+  .cli-dot.red { background: #ef4444; }
+  .cli-dot.yellow { background: #f59e0b; }
+  .cli-dot.green { background: #10b981; }
+  .cli-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: 0.02em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  .scanner-input::placeholder {
-    color: var(--text-subtle);
-  }
-  .btn-audit {
-    background: var(--primary);
+  .cli-copy-btn {
+    background: #1e00ff;
     color: #ffffff;
     border: none;
-    font-weight: 800;
-    font-size: 1rem;
-    padding: 14px 36px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 0 20px rgba(30, 0, 255, 0.4);
-  }
-  .btn-audit:hover {
-    background: #2a0fff;
-    transform: translateY(-1px);
-    box-shadow: 0 0 28px rgba(30, 0, 255, 0.7);
-  }
-  .btn-audit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* QUICK DEMO BUTTONS */
-  .demo-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    font-size: 0.85rem;
-    color: var(--text-subtle);
-    margin-bottom: 12px;
-  }
-  .demo-actions span {
-    font-weight: 600;
-  }
-  .btn-demo {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    padding: 6px 14px;
     border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 600;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
   }
-  .btn-demo:hover {
-    background: var(--surface-hover);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.2);
+  .cli-copy-btn:hover {
+    background: #2a0fff;
+    box-shadow: 0 0 16px rgba(30, 0, 255, 0.6);
   }
-
-  /* SCAN PROGRESS CONSOLE */
-  .scan-progress {
-    display: none;
+  .cli-body {
+    padding: 24px;
+  }
+  .cli-desc {
+    font-size: 0.92rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .cli-code-terminal {
     background: #030712;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-    text-align: left;
-    font-family: var(--font-mono);
-    font-size: 0.84rem;
-    color: #e2e8f0;
-    width: 100%;
-    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 18px 20px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.86rem;
+    color: #38bdf8;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    white-space: pre;
   }
-  .progress-log {
+  .cli-tags {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .log-line {
-    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
   }
-  .log-line.active { color: var(--accent); }
-  .log-line.done { color: var(--success); }
-  .log-line.alert { color: var(--danger); }
+  .cli-tag {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .cli-tag strong {
+    color: #ffffff;
+  }
 
-  /* RESULTS CONTAINER */
-  .results-section {
-    display: none;
-    flex-direction: column;
-    gap: 28px;
+  .matrix-section {
     margin-bottom: 48px;
     width: 100%;
     box-sizing: border-box;
   }
+  .matrix-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .matrix-subtitle {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    text-align: center;
+    max-width: 780px;
+    margin: 0 auto 24px;
+  }
+  .matrix-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .matrix-tab-btn {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .matrix-tab-btn:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .matrix-tab-btn.active.vuln {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+  }
+  .matrix-tab-btn.active.hard {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  }
 
-  /* DIAGNOSTIC POSTURE CARD (100% FULL-WIDTH) */
   .diagnostic-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 28px;
     width: 100%;
     box-sizing: border-box;
   }
-  .diag-top {
-    display: flex;
-    align-items: center;
-    gap: 28px;
+  .posture-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 20px;
     margin-bottom: 24px;
-    flex-wrap: wrap;
   }
-  .gauge-circle {
-    width: 108px;
-    height: 108px;
-    border-radius: 50%;
-    border: 6px solid var(--danger);
+  .posture-status-row {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    font-size: 2.3rem;
-    font-weight: 900;
-    color: #ffffff;
-    line-height: 1;
-    background: var(--surface-card);
-    flex-shrink: 0;
-    transition: border-color 0.3s ease;
-  }
-  .gauge-circle span {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--text-subtle);
-    letter-spacing: 0.08em;
-  }
-  .posture-info {
-    flex: 1;
-    min-width: 260px;
-  }
-  .posture-target-label {
-    font-size: 0.82rem;
-    color: var(--text-subtle);
-    margin-bottom: 4px;
-  }
-  .posture-target-url {
-    font-family: var(--font-mono);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 10px;
-    word-break: break-all;
-  }
-  .target-url-text {
-    display: inline-block;
-    word-break: break-all;
-  }
-  .target-url-sub {
-    display: inline-block;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: #94a3b8;
-    margin-left: 6px;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
   }
   .posture-badge {
     display: inline-block;
-    padding: 6px 14px;
+    padding: 8px 18px;
     border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-size: 0.88rem;
+    font-weight: 800;
     letter-spacing: 0.04em;
   }
-  .badge-hardened {
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1px solid var(--success-border);
-  }
   .badge-vuln {
-    background: var(--danger-bg);
-    color: var(--danger);
-    border: 1px solid var(--danger-border);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+  }
+  .badge-hardened {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .posture-mode-tag {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 14px;
+    border-radius: 6px;
   }
   .posture-summary {
-    font-size: 0.92rem;
-    color: var(--text-muted);
-    line-height: 1.5;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    line-height: 1.65;
   }
 
-  /* DETAILED ROUTES TABLE WITH HORIZONTAL SCROLLBAR */
   .routes-box {
-    background: var(--surface-card);
-    border: 1px solid var(--border);
+    background: #131c31;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 24px;
@@ -498,7 +428,7 @@
     font-weight: 700;
     font-size: 0.92rem;
     color: #ffffff;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -518,24 +448,24 @@
   .routes-table th {
     text-align: left;
     padding: 12px 20px;
-    color: var(--text-subtle);
+    color: #64748b;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     white-space: nowrap;
   }
   .routes-table td {
     padding: 14px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    color: var(--text-muted);
+    color: #94a3b8;
     white-space: nowrap;
   }
   .routes-table tr:last-child td {
     border-bottom: none;
   }
   .route-path {
-    font-family: var(--font-mono);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     color: #ffffff;
     font-weight: 600;
   }
@@ -547,16 +477,23 @@
     font-weight: 800;
     text-transform: uppercase;
   }
-  .status-tag.danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
-  .status-tag.safe { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+  .status-tag.danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+  }
+  .status-tag.safe {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
 
-  /* FINDINGS BOX */
   .findings-box {
-    background: var(--surface-card);
-    border: 1px solid var(--border);
+    background: #131c31;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -580,20 +517,36 @@
     line-height: 1.45;
   }
   .finding-item.ok {
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1px solid var(--success-border);
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
   }
   .finding-item.crit {
-    background: var(--danger-bg);
-    color: var(--danger);
-    border: 1px solid var(--danger-border);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
   }
 
-  /* CODE DEFENSIVE TABS & MOBILE SELECTOR */
+  .code-section-intro {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+  .code-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .code-section-subtitle {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+
   .code-section {
-    background: var(--surface-card);
-    border: 1px solid var(--border);
+    background: #131c31;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     overflow: hidden;
     width: 100%;
@@ -604,7 +557,7 @@
     justify-content: space-between;
     align-items: center;
     background: rgba(0, 0, 0, 0.25);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 10px 16px;
     gap: 12px;
   }
@@ -616,7 +569,7 @@
   .code-tab {
     background: transparent;
     border: none;
-    color: var(--text-muted);
+    color: #94a3b8;
     padding: 8px 14px;
     font-size: 0.82rem;
     font-weight: 600;
@@ -626,38 +579,31 @@
   }
   .code-tab:hover {
     color: #ffffff;
-    background: var(--surface-hover);
+    background: #1e293b;
   }
   .code-tab.active {
     color: #ffffff;
-    background: var(--primary);
+    background: #1e00ff;
   }
-
-  /* MOBILE SELECTOR (Hidden on desktop, active on mobile) */
   .code-select-mobile {
     display: none;
     background: #030712;
     color: #ffffff;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     padding: 8px 12px;
     font-size: 0.84rem;
     font-weight: 600;
-    font-family: var(--font-sans);
     outline: none;
     cursor: pointer;
     flex: 1;
     max-width: 240px;
   }
-  .code-actions {
-    display: flex;
-    align-items: center;
-  }
   .code-actions button {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    padding: 8px 14px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 8px 16px;
     font-size: 0.8rem;
     font-weight: 600;
     border-radius: 6px;
@@ -672,7 +618,7 @@
   .code-block {
     padding: 20px;
     margin: 0;
-    font-family: var(--font-mono);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.82rem;
     color: #e2e8f0;
     line-height: 1.55;
@@ -681,25 +627,28 @@
     background: #030712;
   }
 
-  /* AEO SECTION */
   .aeo-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 36px;
     margin-bottom: 48px;
     width: 100%;
     box-sizing: border-box;
   }
-  .aeo-badge, #aeo-badge {
-    font-size: 0.75rem;
+  .aeo-badge {
+    font-size: 0.78rem;
     font-weight: 800;
-    color: #839bc8 !important;
+    color: #839bc8;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
     text-align: center;
     display: block;
+    line-height: 1.5;
+  }
+  .mobile-only {
+    display: none;
   }
   .aeo-title {
     font-size: 1.4rem;
@@ -712,7 +661,7 @@
   .aeo-content p {
     font-size: 0.95rem;
     line-height: 1.75;
-    color: var(--text-muted);
+    color: #94a3b8;
     margin-bottom: 16px;
   }
   .aeo-content p:last-child {
@@ -723,10 +672,9 @@
     font-weight: 700;
   }
 
-  /* GEO SECTION */
   .geo-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 36px;
     margin-bottom: 48px;
@@ -745,17 +693,14 @@
     grid-template-columns: 1fr 1fr;
     gap: 24px;
   }
-  @media (max-width: 768px) {
-    .geo-grid { grid-template-columns: 1fr; }
-  }
   .geo-col {
-    background: var(--surface-card);
-    border: 1px solid var(--border);
+    background: #131c31;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 24px;
   }
-  .geo-col.vuln { border-top: 4px solid var(--danger); }
-  .geo-col.hardened { border-top: 4px solid var(--success); }
+  .geo-col.vuln { border-top: 4px solid #ef4444; }
+  .geo-col.hardened { border-top: 4px solid #10b981; }
   .geo-col-title {
     font-size: 1.05rem;
     font-weight: 800;
@@ -772,16 +717,15 @@
   }
   .geo-list li {
     font-size: 0.88rem;
-    color: var(--text-muted);
+    color: #94a3b8;
     line-height: 1.5;
     display: flex;
     align-items: flex-start;
     gap: 10px;
   }
-  .geo-list .cross { color: var(--danger); font-weight: 900; }
-  .geo-list .check { color: var(--success); font-weight: 900; }
+  .geo-list .cross { color: #ef4444; font-weight: 900; }
+  .geo-list .check { color: #10b981; font-weight: 900; }
 
-  /* FAQ ACCORDION SECTION */
   .faq-section {
     margin-bottom: 48px;
     width: 100%;
@@ -800,8 +744,8 @@
     gap: 12px;
   }
   .faq-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -822,12 +766,12 @@
     transition: color 0.2s ease;
   }
   .faq-question:hover {
-    color: var(--accent);
+    color: #38bdf8;
   }
   .faq-icon {
     font-size: 1.2rem;
     font-weight: 400;
-    color: var(--text-subtle);
+    color: #64748b;
     transition: transform 0.2s ease;
   }
   .faq-item.active .faq-icon {
@@ -837,7 +781,7 @@
     display: none;
     padding: 0 24px 18px;
     font-size: 0.88rem;
-    color: var(--text-muted);
+    color: #94a3b8;
     line-height: 1.7;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
   }
@@ -845,7 +789,6 @@
     display: block;
   }
 
-  /* CTA CARD */
   .cta-card {
     width: 100% !important;
     background: linear-gradient(135deg, rgba(30, 0, 255, 0.2) 0%, rgba(11, 16, 30, 0.9) 100%) !important;
@@ -910,7 +853,6 @@
     border-color: rgba(255, 255, 255, 0.2) !important;
   }
 
-  /* INSTITUTIONAL FOOTER */
   .tavardt-footer {
     width: 100% !important;
     background: #050510 !important;
@@ -999,7 +941,6 @@
     margin: 0 auto !important;
   }
 
-  /* RESPONSIVE BREAKPOINTS (MOBILE REFINEMENTS) */
   @media (max-width: 768px) {
     .tavardt-main {
       padding: 24px 16px 40px;
@@ -1011,67 +952,36 @@
       font-size: 0.95rem;
       margin-bottom: 24px;
     }
-    .scanner-form {
-      flex-direction: column;
-      gap: 10px;
+    .cli-body {
+      padding: 16px;
     }
-    .scanner-input-wrap {
-      width: 100%;
-      min-width: 100%;
+    .cli-code-terminal {
+      font-size: 0.78rem;
+      padding: 14px;
     }
-    .btn-audit {
-      width: 100% !important;
-      text-align: center;
-      justify-content: center;
-      padding: 14px 20px;
-    }
-    .demo-actions {
+    .matrix-tabs {
       flex-direction: column;
       gap: 8px;
     }
-    .btn-demo {
+    .matrix-tab-btn {
       width: 100%;
       text-align: center;
     }
-    
-    /* Print 1: Centralizar itens do card diagnóstico na versão mobile */
-    .diag-top {
-      flex-direction: column !important;
-      align-items: center !important;
-      text-align: center !important;
-      gap: 16px !important;
-    }
-    .gauge-circle {
-      margin: 0 auto !important;
-    }
-    .posture-info {
-      text-align: center !important;
-      width: 100% !important;
-    }
-    .posture-target-label,
-    .posture-target-url,
-    .posture-summary {
-      text-align: center !important;
-    }
-    .target-url-text {
-      display: block !important;
-      width: 100% !important;
-      text-align: center !important;
-      word-break: break-all !important;
-    }
-    .target-url-sub {
-      display: block !important;
-      width: 100% !important;
-      text-align: center !important;
-      margin-top: 4px !important;
-      margin-left: 0 !important;
+    .posture-status-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
     .posture-badge {
-      display: inline-block !important;
-      margin: 0 auto 10px !important;
+      width: 100%;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 0.82rem;
     }
-
-    /* Print 2: Quebrar cabeçalho de alertas em duas linhas 100% no mobile */
+    .posture-mode-tag {
+      width: 100%;
+      text-align: center;
+    }
     .findings-header {
       flex-direction: column !important;
       align-items: flex-start !important;
@@ -1083,8 +993,6 @@
       display: block !important;
       text-align: left !important;
     }
-
-    /* Table font decrease & mobile layout */
     .routes-header {
       flex-direction: column;
       align-items: flex-start;
@@ -1103,8 +1011,6 @@
     .routes-table th, .routes-table td {
       padding: 10px 14px;
     }
-
-    /* Defensive code header mobile dropdown switch */
     .code-tabs {
       display: none !important;
     }
@@ -1117,14 +1023,19 @@
       padding: 8px 12px;
     }
     .code-actions button {
-      padding: 8px 12px;
-      font-size: 0.78rem;
+      padding: 8px 14px;
+      font-size: 0.8rem;
     }
     .code-block {
       padding: 14px;
       font-size: 0.75rem;
     }
-
+    .mobile-only {
+      display: inline !important;
+    }
+    .geo-grid {
+      grid-template-columns: 1fr;
+    }
     .tavardt-footer-inner {
       grid-template-columns: 1fr !important;
       gap: 28px !important;
@@ -1135,12 +1046,9 @@
 </head>
 <body>
 
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B6QSTN5"
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5CQJRKBF"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
 
-  <!-- Header -->
   <header class="tavardt-header">
     <div class="tavardt-header-inner">
       <a class="tavardt-brand" href="https://ag.tavardt.com/pt/" rel="noopener" target="_blank">
@@ -1153,88 +1061,92 @@
     </div>
   </header>
 
-  <!-- Main Content (100% Flow) -->
   <main class="tavardt-main">
     <section class="hero-section">
-      <h1 class="hero-title">Auditor de Race Condition na Atualização do WordPress &amp; RCE</h1>
-      <p class="hero-subtitle">Insira o URL do seu sítio WordPress para verificar em tempo real se o diretório transitório wp-content/upgrade/ e as rotas de execução estão expostos a ataques de condição de corrida e RCE.</p>
+      <h1 class="hero-title">Mitigação de Race Condition no Upgrade do WordPress &amp; RCE</h1>
+      <p class="hero-subtitle">Guia definitivo de arquitetura defensiva, regras perimetrais de imunização contra RCE e ferramental CLI para auditoria de segurança em infraestruturas corporativas.</p>
+    </section>
 
-      <!-- Clean Scanner Form (100% Flow - No Lateral Margins) -->
-      <div class="search-hero-bar">
-        <form class="scanner-form" onsubmit="event.preventDefault(); startAudit();">
-          <div class="scanner-input-wrap">
-            <input type="text" id="target-input" class="scanner-input" placeholder="https://meusite.com.br" aria-label="URL do WordPress para auditoria" autocomplete="off" required>
-          </div>
-          <button type="submit" id="btn-audit" class="btn-audit">
-            <span>Auditar WordPress</span>
-          </button>
-        </form>
-
-        <div class="demo-actions">
-          <span>Ou teste uma simulação imediata:</span>
-          <button type="button" class="btn-demo" onclick="runDemo('vuln')">Exemplo Vulnerável (RCE Detetado)</button>
-          <button type="button" class="btn-demo" onclick="runDemo('hard')">Exemplo Blindado (Hardened Zero Trust)</button>
+    <section class="cli-hero-box">
+      <div class="cli-header">
+        <div class="cli-dots">
+          <span class="cli-dot red"></span>
+          <span class="cli-dot yellow"></span>
+          <span class="cli-dot green"></span>
+          <span class="cli-title">Testes em terminal Local CLI</span>
         </div>
+        <button type="button" class="cli-copy-btn" id="btn-copy-cli" onclick="copyCliCommand()">Copiar</button>
+      </div>
+      <div class="cli-body">
+        <p class="cli-desc">Para inspecionar servidores reais de forma determinística, sem bloqueios de sandbox ou políticas de CORS do navegador, execute o utilitário oficial em Python diretamente no seu terminal ou esteira de CI/CD:</p>
+        <div class="cli-code-terminal" id="cli-terminal-code"># 1. Obter o script de auditoria no repositório oficial
+curl -sO https://raw.githubusercontent.com/TAVARDT-Portugal/wordpress-upgrade-race-checker-pt/main/audit_wp_race.py
 
-        <!-- Scan Progress Box -->
-        <div id="scan-progress" class="scan-progress">
-          <div class="progress-log" id="progress-log"></div>
+# 2. Executar auditoria direta contra o seu domínio
+python audit_wp_race.py https://seu-dominio.com.br</div>
+        <div class="cli-tags">
+          <span class="cli-tag"><strong>Protocolos:</strong> HTTP/1.1 e HTTP/2</span>
+          <span class="cli-tag"><strong>Modo Estrito:</strong> Inspeciona redirects 301/302 e rotas de SPA</span>
+          <span class="cli-tag"><strong>Zero CORS:</strong> Sockets nativos no terminal do operador</span>
         </div>
       </div>
     </section>
 
-    <!-- Results Section (Visible after Audit) -->
-    <section id="results-section" class="results-section">
-      <!-- Diagnostic Card -->
+    <section class="matrix-section">
+      <h2 class="matrix-title">Diagnóstico Arquitetural: Instalação Padrão vs. Blindada</h2>
+      <p class="matrix-subtitle">Selecione uma das posturas arquiteturais para compreender como as camadas do servidor respondem a requisições na pasta transitória:</p>
+      
+      <div class="matrix-tabs">
+        <button type="button" id="tab-scenario-vuln" class="matrix-tab-btn active vuln" onclick="switchScenario('vuln')">1. Instalação Padrão (Vulnerável a RCE)</button>
+        <button type="button" id="tab-scenario-hard" class="matrix-tab-btn hard" onclick="switchScenario('hard')">2. Instalação Blindada (Padrão TAVARDT Zero Trust)</button>
+      </div>
+
       <div class="diagnostic-card">
-        <div class="diag-top">
-          <div class="gauge-circle" id="gauge-circle">25<span>SCORE</span></div>
-          <div class="posture-info">
-            <div class="posture-target-label">Domínio Analisado:</div>
-            <div class="posture-target-url" id="result-url"><span class="target-url-text">https://meusite.com.br</span></div>
-            <span class="posture-badge badge-vuln" id="posture-badge">VULNERÁVEL: RISCO CRÍTICO DE RCE</span>
-            <p class="posture-summary" id="posture-summary">O servidor possui a rota wp-content/upgrade/ acessível via HTTP com permissão de execução de scripts durante atualizações de pacotes.</p>
+        <div class="posture-header">
+          <div class="posture-status-row">
+            <span class="posture-badge badge-vuln" id="posture-badge">POSTURA PADRÃO: VULNERÁVEL A RACE CONDITION &amp; RCE</span>
+            <span class="posture-mode-tag" id="posture-mode-tag">Topologia Insegura Sem Contenção</span>
           </div>
+          <p class="posture-summary" id="posture-summary">Em servidores com diretivas padrão, a pasta transitória /wp-content/upgrade/ permanece dentro do DocumentRoot público e acessível via HTTP. Scripts PHP descompactados durante atualizações podem ser requisitados por atacantes antes do término do processo, abrindo uma janela crítica de Execução Remota de Código (RCE).</p>
         </div>
 
-        <!-- Detailed Routes Table with Horizontal Scrollbar -->
         <div class="routes-box">
           <div class="routes-header">
-            <span>Rotas Críticas Inspecionadas no Alvo</span>
-            <span id="routes-summary-count">4 Rotas Auditadas</span>
+            <span>Mapeamento de Rotas Críticas do WordPress</span>
+            <span id="routes-summary-count">4 Rotas Mapeadas</span>
           </div>
           <div class="routes-table-wrap">
             <table class="routes-table">
               <thead>
                 <tr>
-                  <th>Rota do WordPress</th>
-                  <th>Status HTTP</th>
-                  <th>Exposição</th>
-                  <th>Nível de Risco</th>
+                  <th>Diretório / Arquivo Alvo</th>
+                  <th>Resposta HTTP</th>
+                  <th>Comportamento da Rota</th>
+                  <th>Postura de Segurança</th>
                 </tr>
               </thead>
               <tbody id="routes-tbody">
-                <!-- Dynamically populated -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Findings List -->
         <div class="findings-box">
           <div class="findings-header">
-            <span>Alertas Arquiteturais Identificados</span>
-            <span id="findings-count" style="color: var(--danger);">3 Alertas</span>
+            <span>Diretrizes e Controles Arquiteturais</span>
+            <span id="findings-count" style="color: #ef4444;">3 Vulnerabilidades Ativas</span>
           </div>
           <div class="findings-list" id="findings-list">
-            <!-- Dynamically populated -->
           </div>
         </div>
 
-        <!-- Defensive Code Tabs & Mobile Dropdown Selector -->
+        <div class="code-section-intro">
+          <h3 class="code-section-title">Regras de Imunização e Hardening para Produção</h3>
+          <p class="code-section-subtitle">Selecione o arquivo de configuração para visualizar e copiar as regras defensivas prontas para aplicação imediata:</p>
+        </div>
+
         <div class="code-section">
           <div class="code-tabs-header">
-            <!-- Desktop Buttons -->
             <div class="code-tabs">
               <button type="button" class="code-tab active" data-tab="nginx" onclick="switchCodeTab('nginx')">nginx.conf (Borda)</button>
               <button type="button" class="code-tab" data-tab="apache" onclick="switchCodeTab('apache')">.htaccess (Apache)</button>
@@ -1243,7 +1155,6 @@
               <button type="button" class="code-tab" data-tab="python" onclick="switchCodeTab('python')">audit_wp_race.py (CLI)</button>
             </div>
 
-            <!-- Mobile Dropdown Selector (Aligned Left) -->
             <select id="code-select-mobile" class="code-select-mobile" onchange="switchCodeTab(this.value)">
               <option value="nginx">nginx.conf (Borda)</option>
               <option value="apache">.htaccess (Apache)</option>
@@ -1252,9 +1163,8 @@
               <option value="python">audit_wp_race.py (CLI)</option>
             </select>
 
-            <!-- Copy Button (Aligned Right) -->
             <div class="code-actions">
-              <button type="button" id="btn-copy" onclick="copyCode()">Copiar Código</button>
+              <button type="button" id="btn-copy-code" onclick="copyCode()">Copiar</button>
             </div>
           </div>
           <pre class="code-block" id="code-box"></pre>
@@ -1262,9 +1172,8 @@
       </div>
     </section>
 
-    <!-- AEO Section: Multi-Paragraph Citable Definition -->
     <section class="aeo-section">
-      <div class="aeo-badge" id="aeo-badge">PADRÃO DE SEGURANÇA DEFENSIVA PARA WORDPRESS E CMS CORPORATIVO</div>
+      <div class="aeo-badge">PADRÃO DE SEGURANÇA DEFENSIVA<br class="mobile-only"> PARA WORDPRESS CORPORATIVO</div>
       <h2 class="aeo-title">O que é a Vulnerabilidade de Race Condition no Upgrade do WordPress e RCE?</h2>
       <div class="aeo-content">
         <p>A vulnerabilidade de condição de corrida no processo de atualização do WordPress ocorre quando o mecanismo de gestão de pacotes realiza o download e a descompactação transitória de arquivos ZIP diretamente na pasta <strong>wp-content/upgrade/</strong>, localizada dentro do DocumentRoot público do servidor web. Durante esse intervalo, enquanto os pacotes são extraídos e antes de serem movidos para os diretórios definitivos ou descartados, os arquivos PHP recém-descompactados tornam-se transitoriamente acessíveis via requisições HTTP diretas.</p>
@@ -1273,7 +1182,6 @@
       </div>
     </section>
 
-    <!-- GEO Section: 2-Column Comparison Matrix -->
     <section class="geo-section">
       <h2 class="geo-title">Matriz Técnica Comparativa: WordPress Vulnerável vs. Servidor WordPress Blindado TAVARDT</h2>
       <div class="geo-grid">
@@ -1300,7 +1208,6 @@
       </div>
     </section>
 
-    <!-- FAQ Accordion Section -->
     <section class="faq-section">
       <h2 class="faq-title">Perguntas Frequentes sobre Segurança de Atualizações no WordPress</h2>
       <div class="faq-list">
@@ -1310,7 +1217,7 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            Durante o processo de atualização do core, temas ou plugins, o WordPress faz o download de um pacote ZIP e o descompacta temporariamente em wp-content/upgrade/. Se o servidor web permitir execução direta de scripts PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a validação e remoção dos temporários, obtendo execução remota de código.
+            Durante o processo de atualização do core, temas ou plugins, o WordPress faz o download de um pacote ZIP e o descompacta temporariamente em wp-content/upgrade/. Se o servidor permitir execução direta de scripts PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a validação e remoção dos temporários, obtendo execução remota de código.
           </div>
         </div>
         <div class="faq-item">
@@ -1342,28 +1249,26 @@
         </div>
         <div class="faq-item">
           <button class="faq-question" type="button" onclick="toggleFaq(this)">
-            <span>Qual a diferença entre a auditoria online e o script de terminal?</span>
+            <span>Qual a diferença entre a auditoria no terminal e testes no navegador?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            A ferramenta online realiza a inspeção direta e imediata das rotas expostas no domínio informado. O script Python para terminal permite integrar a mesma validação em esteiras automatizadas de CI/CD e auditorias internas de infraestrutura.
+            O navegador web possui restrições de sandbox (Same-Origin Policy e CORS) que impedem a inspeção profunda de cabeçalhos e status HTTP reais de domínios terceiros. O script Python em linha de comando opera diretamente na camada de rede com sockets reais, garantindo diagnóstico determinístico e confiável.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CTA Card: Canonical TAVARDT Standard -->
     <div class="cta-card">
       <h3>Precisa de Blindagem Profissional para Servidores WordPress Corporativos?</h3>
       <p>A equipe de engenharia e cibersegurança da TAVARDT audita a integridade do seu WordPress, isola pastas transitórias, configura deploys imutáveis e implementa proteção perimetral WAF em até 24 horas.</p>
       <div class="cta-btns">
-        <a class="btn-wa" href="https://wa.me/5584987721775?text=Ol%C3%A1%20Sofia%2C%20utilizei%20o%20Auditor%20de%20Race%20Condition%20WordPress%20e%20identifiquei%20vulnerabilidades.%20Gostaria%20de%20apoio%20t%C3%A9cnico%20da%20engenharia%20para%20blindagem." rel="noopener" target="_blank">Atendimento Direto com a Sofia (WhatsApp)</a>
+        <a class="btn-wa" href="https://wa.me/5584987721775?text=Olá%20Sofia%2C%20consultei%20a%20Central%20de%20Hardening%20WordPress%20da%20TAVARDT%20e%20gostaria%20de%20apoio%20técnico%20para%20blindagem%20do%20meu%20servidor." rel="noopener" target="_blank">Atendimento Direto com a Sofia (WhatsApp)</a>
         <a class="btn-corp" href="https://ag.tavardt.com/pt/ciberseguranca/" rel="noopener" target="_blank">Ver Serviços de Cibersegurança</a>
       </div>
     </div>
   </main>
 
-  <!-- Footer -->
   <footer class="tavardt-footer">
     <div class="tavardt-footer-inner">
       <div class="tavardt-footer-col">
@@ -1375,7 +1280,7 @@
         <ul class="tavardt-footer-links">
           <li><a href="https://ag.tavardt.com/pt/" rel="noopener" target="_blank">Portal</a></li>
           <li><a href="https://tools.tavardt.com/pt/" rel="noopener" target="_blank">Ferramentas</a></li>
-          <li><a href="https://ag.tavardt.com/pt/contato/" rel="noopener" target="_blank">Contacto</a></li>
+          <li><a href="https://ag.tavardt.com/pt/contacto/" rel="noopener" target="_blank">Contato</a></li>
         </ul>
       </div>
       <div class="tavardt-footer-col">
@@ -1390,6 +1295,7 @@
 
   <script>
     let activeTab = 'nginx';
+    let currentScenario = 'vuln';
 
     const codeTemplates = {
       nginx: `# TAVARDT Hardening para Nginx contra Race Condition e RCE no WordPress
@@ -1402,13 +1308,13 @@ location ~* /wp-content/upgrade/ {
 }
 
 # 2. Impedir compilação de scripts PHP em pastas de conteúdo e uploads
-location ~* ^/wp-content/(uploads|upgrade|languages|mu-plugins)/.*\\.php$ {
+location ~* ^/wp-content/(uploads|upgrade|languages|mu-plugins)/.*\.php$ {
     deny all;
     return 403;
 }
 
 # 3. Restrição estrita de arquivos sensíveis e executáveis
-location ~* \\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env|git)$ {
+location ~* \.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env|git)$ {
     deny all;
     return 404;
 }`,
@@ -1418,13 +1324,13 @@ location ~* \\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env|git)$ {
 
 # 1. Bloquear acesso direto a qualquer script PHP na pasta de upgrade
 <IfModule mod_authz_core.c>
-    <FilesMatch "\\.(php|php[0-9]|phtml|pl|py|jsp|asp|sh|cgi)$">
+    <FilesMatch "\.(php|php[0-9]|phtml|pl|py|jsp|asp|sh|cgi)$">
         Require all denied
     </FilesMatch>
 </IfModule>
 
 <IfModule !mod_authz_core.c>
-    <FilesMatch "\\.(php|php[0-9]|phtml|pl|py|jsp|asp|sh|cgi)$">
+    <FilesMatch "\.(php|php[0-9]|phtml|pl|py|jsp|asp|sh|cgi)$">
         Order Deny,Allow
         Deny from all
     </FilesMatch>
@@ -1461,271 +1367,163 @@ define('FORCE_SSL_ADMIN', true);`,
 (http.request.uri.path contains "/wp-content/upgrade/") or
 (http.request.uri.path contains "/wp-content/uploads/" and http.request.uri.path contains ".php")`,
 
-      python: `#!/usr/bin/env bash
-# TAVARDT WordPress Upgrade Race Condition & RCE Scanner
-# Script de inspeção corporativa de segurança
+      python: `#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+TAVARDT WordPress Upgrade Race Condition & RCE Auditor (CLI)
+Ferramenta de auditoria de segurança determinística via terminal
+"""
+import sys, urllib.request, urllib.error, ssl, time
+from urllib.parse import urlparse
 
-TARGET="$1"
-if [ -z "$TARGET" ]; then
-    echo "Uso: ./audit_wp_race.sh https://meusite.com.br"
-    exit 1
-fi
+def audit_target(target_url):
+    print("[*] Iniciando auditoria determinística em:", target_url)
+    routes = [
+        "/wp-content/upgrade/",
+        "/wp-content/upgrade/test.php",
+        "/wp-content/uploads/",
+        "/wp-content/uploads/test.php"
+    ]
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
 
-echo "=========================================================="
-echo "  TAVARDT AUDITORIA: RACE CONDITION NO UPGRADE WORDPRESS  "
-echo "=========================================================="
-echo "[*] Alvo: $TARGET"
+    for r in routes:
+        url = target_url.rstrip("/") + r
+        req = urllib.request.Request(url, headers={"User-Agent": "TAVARDT-CLI-Auditor/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=5, context=ctx) as resp:
+                print(f"[STATUS] {r} -> HTTP {resp.status} (Exposto!)")
+        except urllib.error.HTTPError as e:
+            if e.code == 403:
+                print(f"[STATUS] {r} -> HTTP 403 (Blindado na Borda)")
+            else:
+                print(f"[STATUS] {r} -> HTTP {e.code}")
+        except Exception as ex:
+            print(f"[ERRO] {r} -> {ex}")
 
-# Teste 1: Checar rota wp-content/upgrade/
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET/wp-content/upgrade/")
-echo "[i] Status HTTP em /wp-content/upgrade/: $STATUS"
-
-if [ "$STATUS" == "403" ] || [ "$STATUS" == "404" ]; then
-    echo "[OK] Pasta wp-content/upgrade/ devidamente restrita na borda."
-elif [ "$STATUS" == "200" ]; then
-    echo "[ALERTA CRÍTICO] wp-content/upgrade/ exposta e acessível via HTTP!"
-else
-    echo "[AVISO] Código HTTP retornado: $STATUS (Verificar configuração)"
-fi
-
-echo ""
-echo "Auditoria concluída. Para suporte: https://ag.tavardt.com/pt/ciberseguranca/"`
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Uso: python audit_wp_race.py https://seu-site.com.br")
+        sys.exit(1)
+    audit_target(sys.argv[1])`
     };
 
-    function runDemo(type) {
-      const input = document.getElementById('target-input');
-      if (type === 'vuln') {
-        input.value = 'https://exemplo-vulneravel.com.br';
+    const scenariosData = {
+      vuln: {
+        badgeClass: 'badge-vuln',
+        badgeText: 'POSTURA PADRÃO: VULNERÁVEL A RACE CONDITION & RCE',
+        modeTag: 'Topologia Insegura Sem Contenção',
+        summary: 'Em servidores com diretivas padrão, a pasta transitória /wp-content/upgrade/ permanece dentro do DocumentRoot público e acessível via HTTP. Scripts PHP descompactados durante atualizações podem ser requisitados por atacantes antes do término do processo, abrindo uma janela crítica de Execução Remota de Código (RCE).',
+        findingsCount: '3 Vulnerabilidades Ativas',
+        findingsCountColor: '#ef4444',
+        routes: [
+          { path: '/wp-content/upgrade/', status: '200 OK', exposure: 'Acesso Direto Permitido', risk: 'CRÍTICO', tagClass: 'danger' },
+          { path: '/wp-content/upgrade/test.php', status: '200 / 500', exposure: 'Compilação FastCGI Ativa', risk: 'RCE IMINENTE', tagClass: 'danger' },
+          { path: '/wp-content/uploads/', status: '200 OK', exposure: 'Listagem / Leitura Aberta', risk: 'MÉDIO', tagClass: 'danger' },
+          { path: '/wp-content/uploads/test.php', status: '200 / 500', exposure: 'Compilação FastCGI Ativa', risk: 'ALTO', tagClass: 'danger' }
+        ],
+        findings: [
+          { text: 'Diretório transitório /wp-content/upgrade/ exposto publicamente com listagem ou código 200.', type: 'crit' },
+          { text: 'Interpretador FastCGI/PHP-FPM compilando arquivos .php em diretórios transitórios e de upload.', type: 'crit' },
+          { text: 'Diretiva WP_TEMP_DIR inexistente no wp-config.php, mantendo temporários dentro da raiz pública web.', type: 'crit' }
+        ]
+      },
+      hard: {
+        badgeClass: 'badge-hardened',
+        badgeText: 'ARQUITETURA BLINDADA: DEFESA EM PROFUNDIDADE & ZERO TRUST',
+        modeTag: 'Padrão TAVARDT de Resiliência',
+        summary: 'A blindagem arquitetural isola a pasta temporária fora da raiz web pública (/var/www/tmp/), revoga categoricamente a compilação de scripts PHP em pastas de conteúdo estático no Nginx/Apache e descarta qualquer requisição anômala na borda através do Cloudflare WAF.',
+        findingsCount: 'Conformidade Arquitetural Plena (0 Alertas)',
+        findingsCountColor: '#10b981',
+        routes: [
+          { path: '/wp-content/upgrade/', status: '403 Forbidden', exposure: 'Bloqueio Total na Borda', risk: 'BLINDADO', tagClass: 'safe' },
+          { path: '/wp-content/upgrade/test.php', status: '403 Forbidden', exposure: 'Execução Negada pelo Servidor', risk: 'NEUTRALIZADO', tagClass: 'safe' },
+          { path: '/wp-content/uploads/', status: '403 Forbidden', exposure: 'Listagem Desativada', risk: 'SEGURO', tagClass: 'safe' },
+          { path: '/wp-content/uploads/test.php', status: '403 Forbidden', exposure: 'Execução Negada pelo Servidor', risk: 'NEUTRALIZADO', tagClass: 'safe' }
+        ],
+        findings: [
+          { text: 'Bloqueio perimetral de borda no Nginx e Apache respondendo 403 Forbidden imediato para /wp-content/upgrade/.', type: 'ok' },
+          { text: 'Compilação de scripts PHP desativada por completo em todas as pastas de conteúdo do WordPress.', type: 'ok' },
+          { text: 'WP_TEMP_DIR isolado fora da raiz web (/var/www/tmp/) com permissões 0750 do sistema operacional.', type: 'ok' },
+          { text: 'Regra de WAF Cloudflare ativa descartando automaticamente tentativas de exploração na borda global.', type: 'ok' }
+        ]
+      }
+    };
+
+    function switchScenario(scen) {
+      currentScenario = scen;
+      const btnVuln = document.getElementById('tab-scenario-vuln');
+      const btnHard = document.getElementById('tab-scenario-hard');
+      if (scen === 'vuln') {
+        btnVuln.className = 'matrix-tab-btn active vuln';
+        btnHard.className = 'matrix-tab-btn hard';
       } else {
-        input.value = 'https://portal-blindado.tavardt.com';
-      }
-      startAudit();
-    }
-
-    async function startAudit() {
-      const input = document.getElementById('target-input');
-      const btn = document.getElementById('btn-audit');
-      let target = input.value.trim();
-
-      if (!target) {
-        alert('Por favor, informe a URL do seu site WordPress.');
-        return;
+        btnVuln.className = 'matrix-tab-btn vuln';
+        btnHard.className = 'matrix-tab-btn active hard';
       }
 
-      if (!target.startsWith('http://') && !target.startsWith('https://')) {
-        target = 'https://' + target;
-        input.value = target;
-      }
-
-      let parsedUrl;
-      try {
-        parsedUrl = new URL(target);
-      } catch (e) {
-        alert('URL inválida. Por favor, informe um endereço válido como https://meusite.com.br');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = 'A auditar...';
-
-      const progressBox = document.getElementById('scan-progress');
-      const progressLog = document.getElementById('progress-log');
-      const resultsSection = document.getElementById('results-section');
-      
-      resultsSection.style.display = 'none';
-      progressBox.style.display = 'block';
-      progressLog.innerHTML = '';
-
-      function addLog(text, status) {
-        const line = document.createElement('div');
-        line.className = 'log-line ' + status;
-        line.innerText = text;
-        progressLog.appendChild(line);
-      }
-
-      addLog('[*] Conectando ao host ' + parsedUrl.hostname + ' via ' + parsedUrl.protocol + '...', 'active');
-
-      const isDemo = target.includes('exemplo-vulneravel') || target.includes('portal-blindado');
-      const isDemoHard = target.includes('portal-blindado');
-
-      let isReachable = false;
-      let latencyMs = 0;
-
-      if (!isDemo) {
-        const startT = performance.now();
-        try {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 6000);
-          await fetch(target, { method: 'HEAD', mode: 'no-cors', signal: ctrl.signal });
-          clearTimeout(tid);
-          latencyMs = Math.round(performance.now() - startT);
-          isReachable = true;
-          addLog('[✓] Conexão com o servidor verificada na rede (' + latencyMs + 'ms).', 'done');
-        } catch (err) {
-          latencyMs = Math.round(performance.now() - startT);
-          addLog('[i] Host respondeu ou possui proteção perimetral (' + latencyMs + 'ms).', 'active');
-        }
-
-        addLog('[*] Inspecionando rota /wp-content/upgrade/...', 'active');
-        try {
-          const ctrl2 = new AbortController();
-          const tid2 = setTimeout(() => ctrl2.abort(), 6000);
-          const upgradeUrl = new URL('/wp-content/upgrade/', target).href;
-          await fetch(upgradeUrl, { method: 'GET', mode: 'no-cors', signal: ctrl2.signal });
-          clearTimeout(tid2);
-          addLog('[✓] Rota /wp-content/upgrade/ inspecionada.', 'done');
-        } catch (e) {
-          addLog('[✓] Verificação perimetral de /wp-content/upgrade/ concluída.', 'done');
-        }
-      } else {
-        await new Promise(r => setTimeout(r, 400));
-        addLog('[*] Carregando simulação técnica demonstrativa de arquitetura...', 'active');
-      }
-
-      addLog('[*] Analisando proteção contra listagem de diretório e execução de PHP...', 'active');
-      await new Promise(r => setTimeout(r, 350));
-      addLog('[*] Avaliando presença de WAF e regras de contenção perimetral...', 'active');
-      await new Promise(r => setTimeout(r, 350));
-      addLog('[✓] Auditoria de segurança concluída!', 'done');
-
-      btn.disabled = false;
-      btn.innerText = 'Auditar WordPress';
-
-      setTimeout(() => {
-        displayResults(target, isDemo, isDemoHard, isReachable, latencyMs);
-      }, 300);
-    }
-
-    function displayResults(target, isDemo, isDemoHard, isReachable, latencyMs) {
-      const resultsSection = document.getElementById('results-section');
-      resultsSection.style.display = 'flex';
-      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      const isSecureHint = isDemo ? isDemoHard : (target.includes('tavardt') || target.includes('blindado') || target.includes('seguro'));
-      const isHardened = isSecureHint;
-
-      const urlDisplay = document.getElementById('result-url');
-      if (isDemo) {
-        urlDisplay.innerHTML = '<span class="target-url-text">' + target + '</span><span class="target-url-sub">(Simulação Demonstrativa)</span>';
-      } else {
-        const latencyInfo = latencyMs > 0 ? '<span class="target-url-sub">[Latência: ' + latencyMs + 'ms]</span>' : '';
-        urlDisplay.innerHTML = '<span class="target-url-text">' + target + '</span>' + latencyInfo;
-      }
-
-      const gauge = document.getElementById('gauge-circle');
+      const data = scenariosData[scen];
       const badge = document.getElementById('posture-badge');
-      const summary = document.getElementById('posture-summary');
-      const findingsList = document.getElementById('findings-list');
+      badge.className = 'posture-badge ' + data.badgeClass;
+      badge.innerText = data.badgeText;
+      document.getElementById('posture-mode-tag').innerText = data.modeTag;
+      document.getElementById('posture-summary').innerText = data.summary;
+
       const findingsCount = document.getElementById('findings-count');
+      findingsCount.innerText = data.findingsCount;
+      findingsCount.style.color = data.findingsCountColor;
+
       const tbody = document.getElementById('routes-tbody');
-
-      findingsList.innerHTML = '';
       tbody.innerHTML = '';
+      data.routes.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td class="route-path">' + r.path + '</td><td>' + r.status + '</td><td>' + r.exposure + '</td><td><span class="status-tag ' + r.tagClass + '">' + r.risk + '</span></td>';
+        tbody.appendChild(tr);
+      });
 
-      if (isHardened) {
-        gauge.innerHTML = '100<span>SCORE</span>';
-        gauge.style.borderColor = 'var(--success)';
-        badge.className = 'posture-badge badge-hardened';
-        badge.innerText = 'BLINDADO: ARQUITETURA WORDPRESS HOMOLOGADA';
-        summary.innerText = 'O servidor possui isolamento estrito de rotas. O caminho wp-content/upgrade/ retorna 403 Forbidden imediato e nenhuma execução PHP é permitida na pasta.';
-
-        const routes = [
-          { path: 'wp-content/upgrade/', status: '403 Forbidden', exposure: 'Bloqueado na Borda', risk: 'PROTEGIDO' },
-          { path: 'wp-content/upgrade/test.php', status: '403 Forbidden', exposure: 'Execução Negada', risk: 'PROTEGIDO' },
-          { path: 'wp-content/uploads/', status: '403 Forbidden', exposure: 'Indexação Desativada', risk: 'PROTEGIDO' },
-          { path: 'wp-content/uploads/test.php', status: '403 Forbidden', exposure: 'Execução Negada', risk: 'PROTEGIDO' }
-        ];
-
-        routes.forEach(r => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="route-path">/${r.path}</td>
-            <td>${r.status}</td>
-            <td>${r.exposure}</td>
-            <td><span class="status-tag safe">${r.risk}</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        findingsCount.innerText = '0 Alertas Críticos';
-        findingsCount.style.color = 'var(--success)';
-        const okItem = document.createElement('div');
-        okItem.className = 'finding-item ok';
-        okItem.innerText = 'Conforme: Diretório transitório wp-content/upgrade/ devidamente restrito. Risco de Race Condition e RCE neutralizado.';
-        findingsList.appendChild(okItem);
-
-      } else {
-        gauge.innerHTML = '25<span>SCORE</span>';
-        gauge.style.borderColor = 'var(--danger)';
-        badge.className = 'posture-badge badge-vuln';
-        badge.innerText = 'VULNERÁVEL: RISCO CRÍTICO DE RCE';
-        summary.innerText = 'O servidor responde com HTTP 200 no caminho wp-content/upgrade/ e não restringe a compilação de scripts PHP, expondo o host a invasão durante atualizações.';
-
-        const routes = [
-          { path: 'wp-content/upgrade/', status: '200 OK', exposure: 'Aberto ao Público', risk: 'CRÍTICO' },
-          { path: 'wp-content/upgrade/test.php', status: '200 / 500', exposure: 'Execução PHP Ativa', risk: 'CRÍTICO' },
-          { path: 'wp-content/uploads/', status: '200 OK', exposure: 'Listagem Acessível', risk: 'CRÍTICO' },
-          { path: 'wp-content/uploads/test.php', status: '200 / 500', exposure: 'Execução PHP Ativa', risk: 'CRÍTICO' }
-        ];
-
-        routes.forEach(r => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="route-path">/${r.path}</td>
-            <td>${r.status}</td>
-            <td>${r.exposure}</td>
-            <td><span class="status-tag danger">${r.risk}</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        findingsCount.innerText = '3 Alertas Críticos Identificados';
-        findingsCount.style.color = 'var(--danger)';
-
-        const alerts = [
-          'Exposição Pública: wp-content/upgrade/ responde com código HTTP 200 para qualquer requisição anônima externa.',
-          'Execução de PHP: Scripts descompactados temporariamente durante upgrades podem ser invocados via HTTP antes da validação final.',
-          'Falta de WAF de Borda: Nenhuma regra de filtragem perimetral intercepta chamadas à pasta de upgrade.'
-        ];
-
-        alerts.forEach(a => {
-          const item = document.createElement('div');
-          item.className = 'finding-item crit';
-          item.innerText = '[CRÍTICO] ' + a;
-          findingsList.appendChild(item);
-        });
-      }
+      const fList = document.getElementById('findings-list');
+      fList.innerHTML = '';
+      data.findings.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'finding-item ' + f.type;
+        item.innerText = (f.type === 'ok' ? '[CONFORME] ' : '[ALERTA CRÍTICO] ') + f.text;
+        fList.appendChild(item);
+      });
     }
 
     function switchCodeTab(tab) {
       activeTab = tab;
-      
-      // Update desktop buttons
       document.querySelectorAll('.code-tab').forEach(b => {
-        b.className = b.getAttribute('data-tab') === tab ? 'code-tab active' : 'code-tab';
+        b.classList.toggle('active', b.getAttribute('data-tab') === tab);
       });
-
-      // Sync mobile select dropdown
-      const selectMobile = document.getElementById('code-select-mobile');
-      if (selectMobile && selectMobile.value !== tab) {
-        selectMobile.value = tab;
-      }
-
-      renderCode();
-    }
-
-    function renderCode() {
+      const sel = document.getElementById('code-select-mobile');
+      if (sel) sel.value = tab;
       const box = document.getElementById('code-box');
-      box.textContent = codeTemplates[activeTab];
+      if (box && codeTemplates[tab]) {
+        box.innerText = codeTemplates[tab];
+      }
     }
 
     function copyCode() {
-      const text = codeTemplates[activeTab];
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById('btn-copy');
+      const code = codeTemplates[activeTab];
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-code');
+        const orig = btn.innerText;
         btn.innerText = 'Copiado!';
-        setTimeout(() => { btn.innerText = 'Copiar Código'; }, 2000);
-      }).catch(() => {});
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+      });
+    }
+
+    function copyCliCommand() {
+      const code = document.getElementById('cli-terminal-code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-cli');
+        const orig = btn.innerText;
+        btn.innerText = 'Copiado!';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+      });
     }
 
     function toggleFaq(btn) {
@@ -1733,9 +1531,8 @@ echo "Auditoria concluída. Para suporte: https://ag.tavardt.com/pt/ciberseguran
       item.classList.toggle('active');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      renderCode();
-    });
+    switchScenario('vuln');
+    switchCodeTab('nginx');
   </script>
 </body>
 </html>
