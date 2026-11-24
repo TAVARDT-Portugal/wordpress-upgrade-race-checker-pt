@@ -77,8 +77,4 @@ Acesse o Guia Interativo em produção:
 
 ***
 
-&copy; 2026 TAVARDT Portugal. Todos os direitos reservados.
-
-***
-
 © 2026 TAVARDT. Todos os direitos reservados.
