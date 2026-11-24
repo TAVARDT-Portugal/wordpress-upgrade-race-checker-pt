@@ -1,4 +1,4 @@
-# TAVARDT Portugal : Central de Hardening & Auditoria WordPress Upgrade Race Condition
+# Central de Hardening & Auditoria WordPress Upgrade Race Condition
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-5b3cf5.svg)](https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
@@ -78,3 +78,7 @@ Acesse o Guia Interativo em produção:
 ***
 
 &copy; 2026 TAVARDT Portugal. Todos os direitos reservados.
+
+***
+
+© 2026 TAVARDT. Todos os direitos reservados.
