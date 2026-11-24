@@ -9,7 +9,6 @@
 <meta content="index, follow" name="robots"/>
 <link href="https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/" rel="canonical"/>
 <link href="./favicon.ico" rel="icon" type="image/x-icon"/>
-
 <meta content="Guia de Hardening &amp; Mitigação: WordPress Upgrade Race Condition | TAVARDT Portugal" property="og:title"/>
 <meta content="Referência técnica contra Race Condition no processo de upgrade do WordPress, exposição de wp-content/upgrade/ e execução remota de código." property="og:description"/>
 <meta content="https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/og-image.jpg" property="og:image"/>
@@ -1045,7 +1044,7 @@
 <header class="tavardt-header">
 <div class="tavardt-header-inner">
 <a class="tavardt-brand" href="https://ag.tavardt.com/pt/" rel="noopener" target="_blank">
-<span class="tavardt-logo-text">TAVARDT<span class="tavardt-brand-dot">.</span></span>
+<span class="tavardt-logo-text">TAVARDT</span>
 </a>
 <nav class="tavardt-nav">
 <a class="tavardt-nav-link" href="https://ag.tavardt.com/pt/" rel="noopener" target="_blank">Portal</a>
@@ -1061,9 +1060,9 @@
 <section class="cli-hero-box">
 <div class="cli-header">
 <div class="cli-dots">
-<span class="cli-dot red"></span>
-<span class="cli-dot yellow"></span>
-<span class="cli-dot green"></span>
+
+
+
 <span class="cli-title">Testes em terminal Local CLI</span>
 </div>
 <button class="cli-copy-btn" id="btn-copy-cli" onclick="copyCliCommand()" type="button">Copiar</button>
@@ -1189,53 +1188,7 @@ python audit_wp_race.py https://seu-dominio.com.br</div>
 </section>
 <section class="faq-section">
 <h2 class="faq-title">Perguntas Frequentes sobre Segurança de Atualizações no WordPress</h2>
-<div class="faq-list">
-<div class="faq-item">
-<button class="faq-question" onclick="toggleFaq(this)" type="button">
-<span>Como funciona a vulnerabilidade de Race Condition no upgrade do WordPress?</span>
-<span class="faq-icon">+</span>
-</button>
-<div class="faq-answer">
-            Durante o processo de atualização do core, temas ou plugins, o WordPress faz o download de um pacote ZIP e o descompacta temporariamente em wp-content/upgrade/. Se o servidor permitir execução direta de scripts PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a validação e remoção dos temporários, obtendo execução remota de código.
-          </div>
-</div>
-<div class="faq-item">
-<button class="faq-question" onclick="toggleFaq(this)" type="button">
-<span>Por que bloquear arquivos PHP em wp-content/upgrade/ é essencial?</span>
-<span class="faq-icon">+</span>
-</button>
-<div class="faq-answer">
-            A pasta de upgrade destina-se unicamente à descompactação transitória de arquivos. Nenhum script PHP localizado em wp-content/upgrade/ deve ser invocado diretamente pelo navegador via HTTP. Bloquear a execução impede que eventuais falhas de corrida ou arquivos órfãos de atualizações incompletas sejam transformados em web shells ativas.
-          </div>
-</div>
-<div class="faq-item">
-<button class="faq-question" onclick="toggleFaq(this)" type="button">
-<span>O que é a diretiva WP_TEMP_DIR e como ela elimina essa vulnerabilidade?</span>
-<span class="faq-icon">+</span>
-</button>
-<div class="faq-answer">
-            A diretiva WP_TEMP_DIR configurada no arquivo wp-config.php define um caminho do sistema operacional para armazenamento temporário fora da raiz pública web (como /var/www/tmp/). Ao mover a pasta temporária para fora do DocumentRoot, torna-se fisicamente impossível para um atacante aceder ou disparar os arquivos via requisições HTTP.
-          </div>
-</div>
-<div class="faq-item">
-<button class="faq-question" onclick="toggleFaq(this)" type="button">
-<span>O Cloudflare WAF consegue proteger o WordPress contra esse ataque?</span>
-<span class="faq-icon">+</span>
-</button>
-<div class="faq-answer">
-            Sim. Uma regra customizada de WAF no Cloudflare bloqueando qualquer requisição onde o caminho contenha wp-content/upgrade/ intercepta e descarta tentativas de exploração na borda global, antes mesmo que os pacotes alcancem o servidor de origem.
-          </div>
-</div>
-<div class="faq-item">
-<button class="faq-question" onclick="toggleFaq(this)" type="button">
-<span>Qual a diferença entre a auditoria no terminal e testes no navegador?</span>
-<span class="faq-icon">+</span>
-</button>
-<div class="faq-answer">
-            O navegador web possui restrições de sandbox (Same-Origin Policy e CORS) que impedem a inspeção profunda de cabeçalhos e status HTTP reais de domínios terceiros. O script Python em linha de comando opera diretamente na camada de rede com sockets reais, garantindo diagnóstico determinístico e confiável.
-          </div>
-</div>
-</div>
+<div class="faq-list"><div class="faq-item"><div class="faq-question">Como funciona a vulnerabilidade de Race Condition no upgrade do WordPress?<span class="faq-toggle">+</span></div><div class="faq-answer">Durante o processo de atualização do core, temas ou plugins, o WordPress descompacta temporariamente os arquivos em wp-content/upgrade/. Se o servidor permitir execução de PHP nessa pasta, existe uma janela temporal de concorrência onde um atacante pode disparar requisições aos arquivos recém-extraídos antes que o WordPress conclua a remoção dos temporários, obtendo execução remota de código.</div></div><div class="faq-item"><div class="faq-question">Por que bloquear arquivos PHP em wp-content/upgrade/ é essencial?<span class="faq-toggle">+</span></div><div class="faq-answer">A pasta de upgrade destina-se unicamente à descompactação transitória de arquivos. Nenhum script PHP localizado em wp-content/upgrade/ deve ser invocado diretamente pelo navegador via HTTP. Bloquear a execução impede que eventuais falhas de corrida sejam exploradas como web shells.</div></div><div class="faq-item"><div class="faq-question">O que é a diretiva WP_TEMP_DIR e como ela elimina essa vulnerabilidade?<span class="faq-toggle">+</span></div><div class="faq-answer">A diretiva WP_TEMP_DIR configurada no arquivo wp-config.php define um caminho do sistema operacional fora da raiz pública web (como /var/www/tmp/). Ao mover a pasta temporária para fora do DocumentRoot, torna-se fisicamente impossível para um atacante aceder os arquivos via requisições HTTP.</div></div><div class="faq-item"><div class="faq-question">O Cloudflare WAF consegue proteger o WordPress contra esse ataque?<span class="faq-toggle">+</span></div><div class="faq-answer">Sim. Uma regra customizada de WAF no Cloudflare bloqueando qualquer requisição onde o caminho contenha wp-content/upgrade/ intercepta e descarta tentativas de exploração na borda global, antes que alcancem o servidor de origem.</div></div><div class="faq-item"><div class="faq-question">Como realizar o teste em meu ambiente de infraestrutura?<span class="faq-toggle">+</span></div><div class="faq-answer">O script oficial audit_wp_race.py fornecido nesta página permite executar a auditoria determinística via linha de comando diretamente no servidor ou terminal do administrador, sem restrições de CORS do navegador.</div></div></div>
 </section>
 <div class="cta-card">
 <h3>Precisa de Blindagem Profissional para Servidores WordPress Corporativos?</h3>
@@ -1249,7 +1202,7 @@ python audit_wp_race.py https://seu-dominio.com.br</div>
 <footer class="tavardt-footer">
 <div class="tavardt-footer-inner">
 <div class="tavardt-footer-col">
-<div class="tavardt-footer-logo">TAVARDT<span class="tavardt-brand-dot">.</span></div>
+<div class="tavardt-footer-logo">TAVARDT</div>
 <p class="tavardt-footer-mission">Transformamos negócios invisíveis em marcas reconhecidas e seguras no mercado digital.</p>
 </div>
 <div class="tavardt-footer-col">
