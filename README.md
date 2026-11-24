@@ -1,5 +1,10 @@
 # TAVARDT Portugal : Central de Hardening & Auditoria WordPress Upgrade Race Condition
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-5b3cf5.svg)](https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Vulnerability](https://img.shields.io/badge/Vulnerability-Race%20Condition-red.svg)](https://tavardt-portugal.github.io/wordpress-upgrade-race-checker-pt/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Repositório oficial e documentação técnica corporativa para mitigação da vulnerabilidade de **Race Condition no Upgrade do WordPress e Execução Remota de Código (RCE)**.
 
 ***
